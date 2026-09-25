@@ -1,0 +1,47 @@
+ARG PHP_VERSION=8.2
+ARG COMPOSER_VERSION=2.4
+ARG PHP_EXTENSION_INSTALLER_VERSION=latest
+
+FROM composer:${COMPOSER_VERSION} AS composer
+
+FROM mlocati/php-extension-installer:${PHP_EXTENSION_INSTALLER_VERSION} AS php_extension_installer
+
+FROM php:${PHP_VERSION}-apache AS phpdev
+
+# Install base system
+RUN apt-get -y update \
+  && apt-get upgrade -y \
+  && apt-get install -y ssl-cert nano wget apt-utils build-essential git curl  libcurl4 \
+    libcurl4-openssl-dev zip libwebp-dev libjpeg62-turbo-dev libpng-dev libxpm-dev libfreetype6-dev \
+    zlib1g-dev  libsqlite3-dev libsqlite3-0 mariadb-client libzip-dev libicu-dev
+
+COPY --from=php_extension_installer /usr/bin/install-php-extensions /usr/local/bin/
+
+# default PHP image extensions
+# ctype curl date dom fileinfo filter ftp hash iconv json libxml mbstring mysqlnd openssl pcre PDO pdo_sqlite Phar
+# posix readline Reflection session SimpleXML sodium SPL sqlite3 standard tokenizer xml xmlreader xmlwriter zlib
+RUN install-php-extensions apcu exif gd intl pdo_mysql opcache zip xdebug redis
+
+# Composer
+# When a user other than root runs composer, COMPOSER_HOME is blank, and the
+# cache dir is $COMPOSER_HOME/.composer. This line creates a world-writable
+# cache dir for any non-root user who runs composer.
+RUN mkdir /.composer && chmod 777 /.composer
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+
+# Enable apache modules
+RUN a2enmod rewrite headers
+RUN a2enmod ssl
+RUN a2ensite default-ssl
+
+RUN cp /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
+
+# Set the www_root to <project>/public dir
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+RUN rm /root/.bashrc
+
+ENV TZ=Europe/Warsaw
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

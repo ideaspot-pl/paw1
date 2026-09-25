@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  front-nginx:
+    build: ./docker/front
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/front/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  php:
+    build:
+      context: ./docker/php
+      args:
+        uid: ${USER_ID:-1000}
+    environment:
+      COMPOSER_MEMORY_LIMIT: "-1"
+    volumes:
+      - ./backend:/var/www/html
+      - ./gtfs:/var/www/gtfs:ro
+      - ./docker/php/z-php.ini:/usr/local/etc/php/conf.d/z-php.ini:ro
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+      - ./docker/php/.bashrc:/root/.bashrc:ro
+    ports:
+      - "${HTTP_PORT:-8480}:80"
+      - "${HTTPS_PORT:-8443}:443"
+
+  db:
+    image: mariadb:10.3.38
+    environment:
+      MYSQL_DATABASE: rozklad
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_USER: rozklad
+      MYSQL_PASSWORD: 12345678
+    volumes:
+      - ./data/rozklad:/var/lib/mysql
+    ports:
+      - "${DB_PORT:-3406}:3306"
+
+  db_test:
+    image: mariadb:10.3.38
+    ports:
+      - "${DB_PORT:-3806}:3306"
+    environment:
+      MYSQL_DATABASE: rozklad_test
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_USER: rozklad_test
+      MYSQL_PASSWORD: 12345678
+    volumes:
+      - ./data/rozklad-test:/var/lib/mysql
+      - ./docker/db-test/rozklad-dump.sql:/docker-entrypoint-initdb.d/01-rozklad-dump.sql:ro
+
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  node:
+    build: ./docker/node
+    volumes:
+      - ./frontend:/app
+
+  frontend:
+    build:
+      context: ./docker/frontend
+      target: runner
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3003:3003"

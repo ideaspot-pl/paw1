@@ -1,0 +1,3 @@
+FROM php:8.5-cli
+COPY ./example.php /tmp/copied.php
+CMD ["php", "/tmp/copied.php"]
