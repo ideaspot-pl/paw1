@@ -10,6 +10,6 @@
   "author": "Artur Karczmarczyk",
   "license": "MIT",
   "dependencies": {
-    "luxon": "^2.0.2"
+    "luxon": "^3.7.2"
   }
 }
