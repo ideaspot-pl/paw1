@@ -1,7 +1,7 @@
 <?php // model.php
 function open_database_connection()
 {
-    $connection = new PDO("sqlite:" . __DIR__ . "/../../../data/flat.db");
+    $connection = new PDO("sqlite:" . __DIR__ . "/../../../flat.db");
 
     return $connection;
 }

@@ -1,5 +1,5 @@
 <?php // index.php
-$connection = new PDO("sqlite:" . __DIR__ . "/../../../data/flat.db");
+$connection = new PDO("sqlite:" . __DIR__ . "/../../../flat.db");
 
 $result = $connection->query('SELECT id, title FROM post');
 ?>
