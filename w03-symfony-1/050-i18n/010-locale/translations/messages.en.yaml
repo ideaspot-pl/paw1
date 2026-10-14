@@ -1,0 +1,5 @@
+forecast:
+    index:
+        header: "Random weather forecast for today"
+        title: "Weather forecast"
+        today_temp: "Today's temperature"

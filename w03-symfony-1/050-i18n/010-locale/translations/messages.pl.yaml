@@ -1,0 +1,5 @@
+forecast:
+    index:
+        header: "Losowa prognoza pogody na dziś"
+        title: "Prognoza pogody"
+        today_temp: "Temperatura na dziś"

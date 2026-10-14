@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'forecast.index.title'|trans}}{% endblock %}
+
+{% block body %}
+    <main>
+        <h1>{{ header }}</h1>
+        <p>{{ 'forecast.index.today_temp'|trans }}: {{temperature}}&deg;C</p>
+
+        <nav>
+            <a href="{{ path('app_forecast', {_locale: 'pl'}) }}">PL</a>
+            <a href="{{ path('app_forecast', {_locale: 'en'}) }}">EN</a>
+            <a href="{{ path('app_forecast', {_locale: 'uk'}) }}">UK</a>
+        </nav>
+    </main>
+
+{% endblock %}
