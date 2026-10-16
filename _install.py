@@ -58,12 +58,13 @@ def uninstall_vendors(base_directory: Path, project_directories: Sequence[str]) 
         require_composer_manifest=False,
     )
     for path in paths:
-        vendor_path = path / "vendor"
-        if vendor_path.is_dir():
-            print(f"Removing {vendor_path}")
-            shutil.rmtree(vendor_path)
-        else:
-            print(f"Vendor directory does not exist, skipping: {vendor_path}")
+        for directory_name in ("vendor", "var"):
+            directory_path = path / directory_name
+            if directory_path.is_dir():
+                print(f"Removing {directory_path}")
+                shutil.rmtree(directory_path)
+            else:
+                print(f"{directory_name.capitalize()} directory does not exist, skipping: {directory_path}")
 
 
 def parse_arguments() -> argparse.Namespace:

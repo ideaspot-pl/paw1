@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Security Example{% endblock %}
+
+{% block body %}
+<p>
+    This page is only for admins! <a href="{{ path('app_security') }}">This one is for everyone.</a>
+</p>
+{% endblock %}

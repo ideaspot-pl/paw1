@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Security Example{% endblock %}
+
+{% block body %}
+<p>
+    This page is only for admins! <a href="{{ path('app_security') }}">This one is for everyone.</a>
+</p>
+<dl>
+    <dt>From controller:</dt>
+    <dd>{{ user.email }}</dd>
+    <dt>From template:</dt>
+    <dd>{{ app.user.email }}</dd>
+</dl>
+
+<p>
+    <a href="/logout">Logout</a>
+</p>
+{% endblock %}
