@@ -1,0 +1,9 @@
+query,locationName,latitude,longitute,date,celsius
+{% for measurement in measurements %}
+{{ name }},
+{{- location.name }},
+{{- location.latitude }},
+{{- location.longitude }},
+{{- measurement.date|date('Y-m-d') }},
+{{- measurement.celsius }}
+{% endfor %}

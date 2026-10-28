@@ -1,0 +1,160 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Location;
+use App\Entity\Measurement;
+use App\Model\LocationDTO;
+use App\Model\MeasurementDTO;
+use App\Model\WeatherResponseDTO;
+use App\Repository\LocationRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+
+final class WeatherApiController extends AbstractController
+{
+    #[Route('/weather/api', name: 'app_weather_api')]
+    public function index(): JsonResponse
+    {
+        return $this->json([
+            'message' => 'Welcome to your new controller!',
+            'path' => 'src/Controller/WeatherApiController.php',
+        ]);
+    }
+
+    #[Route('/api/weather.json')]
+    public function weatherJson(
+        #[MapQueryParameter]
+        string $name,
+        LocationRepository $locationRepository,
+    )
+    {
+        /** @var Location $location */
+        $location = $locationRepository->findOneBy(['name' => $name]);
+
+        return $this->json([
+            'query' => [
+                'name' => $location->getName(),
+            ],
+            'location' => [
+                'id' => $location->getId(),
+                'name' => $location->getName(),
+                'latitude' => $location->getLatitude(),
+                'longitude' => $location->getLongitude(),
+            ],
+            'measurements' => $location->getMeasurements()->map(fn(Measurement $measurement) => [
+                'date' => $measurement->getDate()->format('Y-m-d'),
+                'celsius' => $measurement->getCelsius(),
+            ])->toArray(),
+        ]);
+    }
+
+    #[Route('/api/weather.twig')]
+    public function weatherTwig(
+        LocationRepository $locationRepository,
+        #[MapQueryParameter]
+        string $name,
+        #[MapQueryParameter]
+        string $format = 'csv',
+    )
+    {
+        if (!in_array($format, ['json', 'csv'])) {
+            $format = 'csv';
+        }
+
+        /** @var Location $location */
+        $location = $locationRepository->findOneBy(['name' => $name]);
+        $measurements = $location->getMeasurements()->map(fn(Measurement $measurement) => [
+            'date' => $measurement->getDate()->format('Y-m-d'),
+            'celsius' => $measurement->getCelsius(),
+        ])->toArray();
+
+        $response = $this->render("weather_api/weather_twig.{$format}.twig", [
+            'name' => $name,
+            'location' => $location,
+            'measurements' => $measurements,
+        ]);
+
+        if ($format === 'json') {
+            $response->headers->set('Content-Type', 'application/json');
+        }
+
+        return $response;
+    }
+
+    #[Route('/api/weather.dto')]
+    public function weatherDto(
+        #[MapQueryParameter]
+        string $name,
+        LocationRepository $locationRepository,
+    )
+    {
+        /** @var Location $location */
+        $location = $locationRepository->findOneBy(['name' => $name]);
+        $measurements = $location->getMeasurements()->map(fn(Measurement $measurement) => new MeasurementDTO(
+            date: $measurement->getDate()->format('Y-m-d'),
+            celsius: $measurement->getCelsius(),
+        ))->toArray();
+
+        $dto = new WeatherResponseDTO(
+            success: true,
+            name: $name,
+            location: new LocationDTO(
+                name: $location->getName(),
+                country: $location->getCountry(),
+                latitude: $location->getLatitude(),
+                longitude: $location->getLongitude(),
+            ),
+            measurements: $measurements,
+        );
+
+        return $this->json($dto);
+//        return $this->json($location);
+    }
+
+    #[Route('/api/weather.serializer')]
+    public function weatherSerializer(
+        LocationRepository $locationRepository,
+        SerializerInterface $serializer,
+        #[MapQueryParameter]
+        string $name,
+        #[MapQueryParameter]
+        string $format = 'json',
+    )
+    {
+        /** @var Location $location */
+        $location = $locationRepository->findOneBy(['name' => $name]);
+        $measurements = $location->getMeasurements()->map(fn(Measurement $measurement) => new MeasurementDTO(
+            date: $measurement->getDate()->format('Y-m-d'),
+            celsius: $measurement->getCelsius(),
+        ))->toArray();
+
+        $dto = new WeatherResponseDTO(
+            success: true,
+            name: $name,
+            location: new LocationDTO(
+                name: $location->getName(),
+                country: $location->getCountry(),
+                latitude: $location->getLatitude(),
+                longitude: $location->getLongitude(),
+            ),
+            measurements: $measurements,
+        );
+
+        $serialized = $serializer->serialize($dto, $format);
+
+        $response = new Response($serialized);
+
+        $response->headers->set('Content-Type', match ($format) {
+            'json' => 'application/json',
+            'xml' => 'text/xml',
+            default => 'text/plain',
+        });
+
+        return $response;
+    }
+}

@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Location;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+
+final class LocationApiController extends AbstractController
+{
+    #[Route('/location/api', name: 'app_location_api')]
+    public function index(): JsonResponse
+    {
+        return $this->json([
+            'message' => 'Welcome to your new controller!',
+            'path' => 'src/Controller/LocationApiController.php',
+        ]);
+    }
+
+    #[Route('/api/location.payload')]
+    public function locationPayload(
+        Request $request,
+        EntityManagerInterface $em,
+    ): JsonResponse
+    {
+        $payload = $request->toArray();
+
+        $location = new Location();
+        $location->setName($payload['name']);
+        $location->setCountry($payload['country']);
+        $location->setLatitude($payload['latitude']);
+        $location->setLongitude($payload['longitude']);
+        $em->persist($location);
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/api/location.map')]
+    public function locationMap(
+        #[MapRequestPayload]
+        Location $location,
+        EntityManagerInterface $em,
+    ): JsonResponse
+    {
+        $em->persist($location);
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/api/location.deserializer')]
+    public function locationDeserializer(
+        Request $request,
+        SerializerInterface $serializer,
+        EntityManagerInterface $em,
+    ): JsonResponse
+    {
+        $payload = $request->getContent();
+
+        $location = $serializer->deserialize($payload, Location::class, 'json');
+        $em->persist($location);
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+}
