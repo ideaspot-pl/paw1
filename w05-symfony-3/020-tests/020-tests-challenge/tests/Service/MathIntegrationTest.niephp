@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Tests\Service;
+
+use App\Service\Math;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Psr\Log\LoggerInterface;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+
+class MathIntegrationTest extends KernelTestCase
+{
+    public static function dataAdd(): array
+    {
+        $data = [
+            [1, 2, 3],
+            [3, 4, 7],
+            [0, 0, 0],
+            [-1, 1, 0],
+        ];
+
+
+        return $data;
+    }
+
+    #[DataProvider('dataAdd')]
+    public function testAdd($a, $b, $expectedC): void
+    {
+        $kernel = self::bootKernel();
+
+//        $this->assertSame('test', $kernel->getEnvironment());
+        // $routerService = static::getContainer()->get('router');
+        // $myCustomService = static::getContainer()->get(CustomService::class);
+
+        $logger = static::getContainer()->get(LoggerInterface::class);
+
+        $math = new Math($logger);
+        $c = $math->add($a, $b);
+
+        $this->assertEquals($expectedC, $c, "$a + $b != $expectedC ($c returned)");
+    }
+}

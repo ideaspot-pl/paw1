@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Tests\Service;
+
+use App\Service\Math;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+
+class MathTest extends TestCase
+{
+    public static function dataAdd(): array
+    {
+        $data = [
+            [1, 2, 3],
+            [3, 4, 7],
+            [0, 0, 0],
+            [-1, 1, 0],
+        ];
+
+
+        return $data;
+    }
+
+
+    #[DataProvider('dataAdd')]
+    public function testAdd($a, $b, $expectedC): void
+    {
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $math = new Math($logger);
+        $c = $math->add($a, $b);
+
+        $this->assertEquals($expectedC, $c, "$a + $b != $expectedC ($c returned)");
+    }
+}
